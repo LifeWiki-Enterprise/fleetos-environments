@@ -1,0 +1,44 @@
+name: full-desktop
+version: "1.0.0"
+description: "Full desktop — browser, terminal, file manager, office apps. Universal environment."
+
+agent_setup:
+  base_image: fleetos-desktop:latest
+  ports:
+    vnc: 6080
+    preview: 4000
+    health: 8080
+  pre_install:
+    - chromium-browser
+    - libreoffice
+    - code-oss  # VS Code OSS
+
+user_setup:
+  description: "User observes via noVNC in the Monitor page — same desktop the agent sees"
+  services: []  # no separate services — the desktop IS the interface
+  interface: "http://localhost:6080"
+
+observer:
+  agent_view:
+    type: vnc
+    port: 6080
+  user_view:
+    type: vnc
+    port: 6080  # same view — user and agent see the same desktop
+  recording:
+    enabled: true
+    format: video  # screen recording via ffmpeg
+
+reset:
+  steps:
+    - "Stop and remove desktop container"
+    - "Clear browser state (profile, cookies, history)"
+    - "Delete temporary files and downloads"
+    - "Restore home directory to default state"
+  script: reset.sh
+  timeout: 120
+
+variables:
+  vnc_resolution: "1920x1080"
+  vnc_password: "fleetos"
+  color_depth: "24"

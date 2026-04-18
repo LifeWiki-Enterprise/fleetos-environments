@@ -1,0 +1,65 @@
+name: fleetos-webapp
+version: "1.0.0"
+description: "FleetOS web app — user interacts via browser, agent works in container"
+
+agent_setup:
+  base_image: fleetos-base:latest
+  ports:
+    preview: 4000
+    health: 8080
+  pre_install: []  # agent installs tools from harness at runtime
+
+user_setup:
+  description: "Full FleetOS stack for user interaction — API, web app, and registry"
+  services:
+    - name: postgres
+      image: postgres:16
+      port: 5432
+      env:
+        POSTGRES_DB: fleetos
+        POSTGRES_USER: fleetos
+        POSTGRES_PASSWORD: fleetos-dev
+    - name: redis
+      image: redis:7-alpine
+      port: 6379
+    - name: api
+      image: fleetos-api:latest
+      port: 4800
+      depends_on: [postgres, redis]
+      env:
+        DATABASE_URL: "postgresql://fleetos:fleetos-dev@postgres:5432/fleetos"
+        REDIS_URL: "redis://redis:6379"
+    - name: registry
+      image: fleetos-registry:latest
+      port: 4900
+      depends_on: [api]
+    - name: app
+      image: fleetos-app:latest
+      port: 3002
+      depends_on: [api, registry]
+  interface: "http://localhost:3002"
+
+observer:
+  agent_view:
+    type: terminal
+    source: "docker logs -f {container_name}"
+  user_view:
+    type: browser
+    url: "http://localhost:3002"
+  recording:
+    enabled: true
+    format: jsonl
+
+reset:
+  steps:
+    - "Stop and remove agent container"
+    - "Reset database to clean state (re-run migrations + seed)"
+    - "Clear Redis cache"
+    - "Clear message history and trial artifacts"
+  script: reset.sh
+  timeout: 90
+
+variables:
+  db_name: fleetos
+  db_user: fleetos
+  db_password: fleetos-dev

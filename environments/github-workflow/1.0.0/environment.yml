@@ -1,0 +1,49 @@
+name: github-workflow
+version: "1.0.0"
+description: "GitHub PR workflow — agent works on a repo, creates PRs, user reviews on GitHub"
+
+agent_setup:
+  base_image: fleetos-base:latest
+  ports:
+    preview: 4000
+    health: 8080
+  required_tools:
+    - tool-github
+  env:
+    GIT_AUTHOR_NAME: "FleetOS Agent"
+    GIT_AUTHOR_EMAIL: "agent@fleetos.dev"
+    GIT_COMMITTER_NAME: "FleetOS Agent"
+    GIT_COMMITTER_EMAIL: "agent@fleetos.dev"
+
+user_setup:
+  description: "User reviews pull requests on github.com — no local services needed"
+  services: []  # GitHub is external, no local infrastructure required
+  interface: "https://github.com/{repo}/pulls"
+
+observer:
+  agent_view:
+    type: terminal
+    source: "docker logs -f {container_name}"
+  user_view:
+    type: browser
+    url: "https://github.com/{repo}/pulls"
+  recording:
+    enabled: true
+    format: jsonl
+
+variables:
+  repo: "LifeWiki-Enterprise/gym-test-repo"
+  branch_prefix: "gym/"
+  default_branch: "main"
+  github_app_id: ""
+  github_app_installation_id: ""
+  github_app_private_key_path: ""
+
+reset:
+  steps:
+    - "Close all open PRs with the gym/ branch prefix"
+    - "Delete all remote branches with the gym/ prefix"
+    - "Reset the default branch to the known-clean commit"
+    - "Remove agent container and workspace"
+  script: reset.sh
+  timeout: 60
