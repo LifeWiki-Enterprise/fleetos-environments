@@ -78,13 +78,11 @@ for i in $(seq 1 30); do
     sleep 2
 done
 
-# Open Chromium to the FleetOS web app (as agent user with DISPLAY)
+# Open Firefox to the FleetOS web app (as agent user with DISPLAY)
 export DISPLAY=:1
-BROWSER_CMD=$(which chromium-browser 2>/dev/null || which chromium || which google-chrome)
-su - agent -c "DISPLAY=:1 $BROWSER_CMD --no-sandbox --disable-dev-shm-usage --start-maximized http://localhost:3002 &" 2>/dev/null || \
-    DISPLAY=:1 $BROWSER_CMD --no-sandbox --disable-dev-shm-usage --start-maximized http://localhost:3002 &
-
-echo "[GYM-ENV] FleetOS Web App ready — Browser opening..."
+su - agent -c "DISPLAY=:1 firefox --new-window http://localhost:3002 &" 2>/dev/null &
+sleep 2
+echo "[GYM-ENV] FleetOS Web App ready — Firefox opening..."
 SETUP
 RUN chmod +x /opt/gym/setup-environment.sh
 

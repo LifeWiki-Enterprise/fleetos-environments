@@ -48,23 +48,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-# ── Browser: Chromium (via snap-free deb from Ubuntu 22.04 Chromium PPA) ──
-# Ubuntu 24.04 ships firefox/chromium as snap which doesn't work in Docker.
-# We install chromium from a real .deb source.
-RUN add-apt-repository -y ppa:saiarcot895/chromium-dev 2>/dev/null || true \
+# ── Browser: Firefox from Mozilla's APT repo (real .deb, not snap) ─────
+# Ubuntu 24.04 ships firefox as a snap which doesn't work in Docker.
+# Mozilla's APT repo provides a real .deb that works everywhere.
+RUN install -d -m 0755 /etc/apt/keyrings \
+    && wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O- \
+       | tee /etc/apt/keyrings/packages.mozilla.org.asc > /dev/null \
+    && echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" \
+       | tee /etc/apt/sources.list.d/mozilla.list > /dev/null \
+    && echo 'Package: *\nPin: origin packages.mozilla.org\nPin-Priority: 1000' \
+       | tee /etc/apt/preferences.d/mozilla > /dev/null \
     && apt-get update \
-    && apt-get install -y --no-install-recommends chromium-browser \
-    && rm -rf /var/lib/apt/lists/* \
-    || ( \
-    # Fallback: install Chromium via the snap-free deb from Debian
-    apt-get update \
-    && apt-get install -y --no-install-recommends chromium \
-    && rm -rf /var/lib/apt/lists/* \
-    )
+    && apt-get install -y --no-install-recommends firefox \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create symlinks so both 'chromium' and 'google-chrome' work
-RUN ln -sf "$(which chromium-browser 2>/dev/null || which chromium)" /usr/local/bin/google-chrome 2>/dev/null || true \
-    && ln -sf "$(which chromium-browser 2>/dev/null || which chromium)" /usr/local/bin/chrome 2>/dev/null || true
+# Make Firefox the default browser (fixes "Failed to execute default Web Browser")
+RUN update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/bin/firefox 100 \
+    && update-alternatives --install /usr/bin/gnome-www-browser gnome-www-browser /usr/bin/firefox 100 \
+    && ln -sf /usr/bin/firefox /usr/local/bin/chrome \
+    && ln -sf /usr/bin/firefox /usr/local/bin/google-chrome
 
 # ── noVNC (web-based VNC client) ──────────────────────────────
 RUN git clone --depth 1 https://github.com/novnc/noVNC.git /opt/novnc \
