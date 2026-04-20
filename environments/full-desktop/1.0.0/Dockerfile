@@ -24,12 +24,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # VNC
     tigervnc-standalone-server \
     tigervnc-tools \
-    # Browsers
-    firefox \
     # Dev tools
     curl wget git jq \
     ca-certificates \
     openssh-client \
+    gnupg \
+    software-properties-common \
     vim nano \
     htop \
     # Node.js (for web app environments)
@@ -47,6 +47,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     net-tools \
     netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
+
+# ── Browser: Chromium (via snap-free deb from Ubuntu 22.04 Chromium PPA) ──
+# Ubuntu 24.04 ships firefox/chromium as snap which doesn't work in Docker.
+# We install chromium from a real .deb source.
+RUN add-apt-repository -y ppa:saiarcot895/chromium-dev 2>/dev/null || true \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends chromium-browser \
+    && rm -rf /var/lib/apt/lists/* \
+    || ( \
+    # Fallback: install Chromium via the snap-free deb from Debian
+    apt-get update \
+    && apt-get install -y --no-install-recommends chromium \
+    && rm -rf /var/lib/apt/lists/* \
+    )
+
+# Create symlinks so both 'chromium' and 'google-chrome' work
+RUN ln -sf "$(which chromium-browser 2>/dev/null || which chromium)" /usr/local/bin/google-chrome 2>/dev/null || true \
+    && ln -sf "$(which chromium-browser 2>/dev/null || which chromium)" /usr/local/bin/chrome 2>/dev/null || true
 
 # ── noVNC (web-based VNC client) ──────────────────────────────
 RUN git clone --depth 1 https://github.com/novnc/noVNC.git /opt/novnc \
