@@ -111,6 +111,7 @@ sleep 3
 # Start noVNC (websockify proxy)
 /opt/novnc/utils/websockify/run \
   --web /opt/novnc \
+  --heartbeat 30 \
   ${NOVNC_PORT} \
   localhost:${VNC_PORT} &
 
