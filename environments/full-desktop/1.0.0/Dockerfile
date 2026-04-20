@@ -100,9 +100,13 @@ su - agent -c "vncserver :1 \
   -geometry ${VNC_RESOLUTION} \
   -depth ${VNC_DEPTH} \
   -localhost no \
-  -SecurityTypes None"
+  -SecurityTypes None \
+  --I-KNOW-THIS-IS-INSECURE"
 
 echo "[OK] VNC server started on :${VNC_PORT}"
+
+# Wait for VNC to be ready
+sleep 3
 
 # Start noVNC (websockify proxy)
 /opt/novnc/utils/websockify/run \
