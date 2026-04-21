@@ -49,18 +49,29 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Browser: Firefox from Mozilla's APT repo (real .deb, not snap) ─────
-# Ubuntu 24.04 ships firefox as a snap which doesn't work in Docker.
-# Mozilla's APT repo provides a real .deb that works everywhere.
+# Ubuntu 24.04 ships firefox as a snap stub which doesn't work in Docker.
+# We must: (1) remove the snap stub, (2) add Mozilla's repo with proper
+# multi-line pin file, (3) install the real .deb.
+
+# Remove the snap stub Firefox first
+RUN apt-get update \
+    && apt-get remove -y firefox 2>/dev/null || true
+
+# Add Mozilla APT repo
 RUN install -d -m 0755 /etc/apt/keyrings \
-    && wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O- \
-       | tee /etc/apt/keyrings/packages.mozilla.org.asc > /dev/null \
+    && wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O /etc/apt/keyrings/packages.mozilla.org.asc \
     && echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" \
-       | tee /etc/apt/sources.list.d/mozilla.list > /dev/null \
-    && echo 'Package: *\nPin: origin packages.mozilla.org\nPin-Priority: 1000' \
-       | tee /etc/apt/preferences.d/mozilla > /dev/null \
-    && apt-get update \
+       > /etc/apt/sources.list.d/mozilla.list
+
+# Write a proper multi-line pin file (echo -e doesn't work reliably, use printf)
+RUN printf 'Package: *\nPin: origin packages.mozilla.org\nPin-Priority: 1000\n' \
+       > /etc/apt/preferences.d/mozilla
+
+# Install real .deb Firefox from Mozilla
+RUN apt-get update \
     && apt-get install -y --no-install-recommends firefox \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && firefox --version
 
 # Make Firefox the default browser (fixes "Failed to execute default Web Browser")
 RUN update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/bin/firefox 100 \
