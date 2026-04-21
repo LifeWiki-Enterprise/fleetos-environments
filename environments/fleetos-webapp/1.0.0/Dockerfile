@@ -26,11 +26,16 @@ COPY fleetos-harnesses /opt/fleetos-repos/fleetos-harnesses
 COPY fleetos-tools /opt/fleetos-repos/fleetos-tools
 COPY fleetos-skills /opt/fleetos-repos/fleetos-skills
 
-# Remove any local node_modules/.next from the copy (will reinstall)
+# Remove any local node_modules/.next/lock files from the copy
+# (will reinstall inside container for correct architecture)
 RUN rm -rf /opt/fleetos-repos/fleetos-app/node_modules \
            /opt/fleetos-repos/fleetos-app/.next \
+           /opt/fleetos-repos/fleetos-app/package-lock.json \
+           /opt/fleetos-repos/fleetos-app/bun.lock \
            /opt/fleetos-repos/fleetos-api/node_modules \
+           /opt/fleetos-repos/fleetos-api/bun.lock \
            /opt/fleetos-repos/fleetos-registry/node_modules \
+           /opt/fleetos-repos/fleetos-registry/bun.lock \
            /opt/fleetos-repos/fleetos-app/.env.local \
            /opt/fleetos-repos/fleetos-api/.env \
            2>/dev/null || true
@@ -38,7 +43,13 @@ RUN rm -rf /opt/fleetos-repos/fleetos-app/node_modules \
 # ── Install deps at build time ────────────────────────────────
 RUN cd /opt/fleetos-repos/fleetos-registry && bun install
 RUN cd /opt/fleetos-repos/fleetos-api && bun install
-RUN cd /opt/fleetos-repos/fleetos-app && npm install --legacy-peer-deps
+
+# Next.js app — install with optional deps (lightningcss native binaries)
+# and explicitly install the ARM64 binary
+RUN cd /opt/fleetos-repos/fleetos-app \
+    && rm -rf node_modules package-lock.json \
+    && npm install --legacy-peer-deps --include=optional \
+    && npm install lightningcss --legacy-peer-deps --force
 
 # ── Runtime startup script ────────────────────────────────────
 COPY <<'SETUP' /opt/gym/setup-environment.sh
