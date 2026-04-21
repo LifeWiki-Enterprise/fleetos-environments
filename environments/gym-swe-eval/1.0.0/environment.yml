@@ -1,0 +1,42 @@
+name: gym-swe-eval
+version: "1.0.0"
+description: "Gym SWE eval — scaffold-Nextjs-and-show task. Extends desktop with tools + scoring hooks"
+
+agent_setup:
+  base_image: fleetos-gym-swe-eval:latest
+  ports:
+    vnc: 6080
+    preview: 4000
+    health: 8080
+  pre_install: []
+
+user_setup:
+  description: "Eval scenario: agent scaffolds a Next.js todo app on :4000 and shows it to the operator"
+  services: []
+  interface: "http://localhost:6080"
+
+observer:
+  agent_view:
+    type: vnc
+    port: 6080
+  user_view:
+    type: vnc
+    port: 6080
+  recording:
+    enabled: true
+    format: video
+
+eval:
+  task_file: /opt/gym/task.md
+  score_file: /opt/gym/score.sh
+  budget_seconds: 900
+  pass_threshold: 0.8
+
+reset:
+  steps:
+    - "Stop and remove agent container"
+    - "Clear ~/work/todo-app"
+  timeout: 60
+
+variables:
+  vnc_resolution: "1920x1080"

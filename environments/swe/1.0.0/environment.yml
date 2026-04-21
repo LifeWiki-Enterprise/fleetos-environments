@@ -1,0 +1,36 @@
+name: swe
+version: "1.0.0"
+description: "SWE production — full computer + bun, pnpm, build-essential, docker CLI, display tools"
+
+agent_setup:
+  base_image: fleetos-swe:latest
+  ports:
+    vnc: 6080
+    preview: 4000
+    health: 8080
+  pre_install: []  # tools and skills installed at runtime from the registry
+
+user_setup:
+  description: "User observes via noVNC; agent serves HTTP dev servers on 4000 and GUI apps on the same display"
+  services: []
+  interface: "http://localhost:6080"
+
+observer:
+  agent_view:
+    type: vnc
+    port: 6080
+  user_view:
+    type: vnc
+    port: 6080
+  recording:
+    enabled: true
+    format: video
+
+reset:
+  steps:
+    - "Stop and remove agent container"
+    - "Clear ~/work and /tmp"
+  timeout: 60
+
+variables:
+  vnc_resolution: "1920x1080"

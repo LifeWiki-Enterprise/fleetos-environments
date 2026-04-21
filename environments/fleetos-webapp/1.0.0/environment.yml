@@ -2,7 +2,13 @@ name: fleetos-webapp
 version: "1.0.0"
 description: "FleetOS web app — user interacts via browser, agent works in container"
 
+# Image the gym container itself boots — full FleetOS stack + desktop.
+# Read by the gym session API; distinct from agent_setup.base_image.
+gym_image: fleetos-gym-webapp:latest
+
 agent_setup:
+  # Base image for agents spawned INSIDE the running gym (e.g. employees
+  # hired via the nested FleetOS). Not the gym container itself.
   base_image: fleetos-base:latest
   ports:
     preview: 4000
