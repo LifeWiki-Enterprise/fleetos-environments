@@ -16,13 +16,15 @@ RUN curl -fsSL https://bun.sh/install | bash \
     && ln -s /root/.bun/bin/bun /usr/local/bin/bun
 
 # ── Clone FleetOS repos at BUILD time (not runtime) ───────────
+# Disable credential prompts (repos are public, no auth needed)
+ENV GIT_TERMINAL_PROMPT=0
 RUN mkdir -p /opt/fleetos-repos && cd /opt/fleetos-repos \
-    && git clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-app.git \
-    && git clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-api.git \
-    && git clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-registry.git \
-    && git clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-harnesses.git \
-    && git clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-tools.git \
-    && git clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-skills.git
+    && git -c credential.helper= clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-app.git \
+    && git -c credential.helper= clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-api.git \
+    && git -c credential.helper= clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-registry.git \
+    && git -c credential.helper= clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-harnesses.git \
+    && git -c credential.helper= clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-tools.git \
+    && git -c credential.helper= clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-skills.git
 
 # ── Install deps at build time ────────────────────────────────
 RUN cd /opt/fleetos-repos/fleetos-registry && bun install
