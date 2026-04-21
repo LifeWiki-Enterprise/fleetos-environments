@@ -44,12 +44,16 @@ RUN rm -rf /opt/fleetos-repos/fleetos-app/node_modules \
 RUN cd /opt/fleetos-repos/fleetos-registry && bun install
 RUN cd /opt/fleetos-repos/fleetos-api && bun install
 
-# Next.js app — install with optional deps (lightningcss native binaries)
-# and explicitly install the ARM64 binary
+# Next.js app — install with pnpm which handles native binaries correctly
+# npm --legacy-peer-deps has known bugs with optional platform binaries
+# (lightningcss, @tailwindcss/oxide, etc.)
+RUN npm install -g pnpm
+
 RUN cd /opt/fleetos-repos/fleetos-app \
     && rm -rf node_modules package-lock.json \
-    && npm install --legacy-peer-deps --include=optional \
-    && npm install lightningcss --legacy-peer-deps --force
+    && pnpm install --no-frozen-lockfile \
+    && pnpm add lightningcss-linux-arm64-gnu @tailwindcss/oxide-linux-arm64-gnu || \
+       pnpm add lightningcss @tailwindcss/oxide
 
 # ── Runtime startup script ────────────────────────────────────
 COPY <<'SETUP' /opt/gym/setup-environment.sh
@@ -87,7 +91,7 @@ echo "[GYM-ENV] API starting on :4800"
 
 # Start Web App (in background, will take ~30s)
 cd $REPOS_DIR/fleetos-app
-nohup npx next dev --port 3002 > /tmp/app.log 2>&1 &
+nohup pnpm exec next dev --port 3002 > /tmp/app.log 2>&1 &
 echo "[GYM-ENV] Web App starting on :3002"
 
 # Wait for web app to be ready (up to 60s)
