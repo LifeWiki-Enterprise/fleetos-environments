@@ -15,16 +15,25 @@ USER root
 RUN curl -fsSL https://bun.sh/install | bash \
     && ln -s /root/.bun/bin/bun /usr/local/bin/bun
 
-# ── Clone FleetOS repos at BUILD time (not runtime) ───────────
-# Disable credential prompts (repos are public, no auth needed)
-ENV GIT_TERMINAL_PROMPT=0
-RUN mkdir -p /opt/fleetos-repos && cd /opt/fleetos-repos \
-    && git -c credential.helper= clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-app.git \
-    && git -c credential.helper= clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-api.git \
-    && git -c credential.helper= clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-registry.git \
-    && git -c credential.helper= clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-harnesses.git \
-    && git -c credential.helper= clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-tools.git \
-    && git -c credential.helper= clone --depth 1 https://github.com/LifeWiki-Enterprise/fleetos-skills.git
+# ── Copy FleetOS repos from local build context (repos are private) ───
+# Build context: ../../../../../ (the LifeWiki-Enterprise root)
+# This requires building from the root: docker build -f environments/fleetos-webapp/1.0.0/Dockerfile .
+RUN mkdir -p /opt/fleetos-repos
+COPY fleetos-app /opt/fleetos-repos/fleetos-app
+COPY fleetos-api /opt/fleetos-repos/fleetos-api
+COPY fleetos-registry /opt/fleetos-repos/fleetos-registry
+COPY fleetos-harnesses /opt/fleetos-repos/fleetos-harnesses
+COPY fleetos-tools /opt/fleetos-repos/fleetos-tools
+COPY fleetos-skills /opt/fleetos-repos/fleetos-skills
+
+# Remove any local node_modules/.next from the copy (will reinstall)
+RUN rm -rf /opt/fleetos-repos/fleetos-app/node_modules \
+           /opt/fleetos-repos/fleetos-app/.next \
+           /opt/fleetos-repos/fleetos-api/node_modules \
+           /opt/fleetos-repos/fleetos-registry/node_modules \
+           /opt/fleetos-repos/fleetos-app/.env.local \
+           /opt/fleetos-repos/fleetos-api/.env \
+           2>/dev/null || true
 
 # ── Install deps at build time ────────────────────────────────
 RUN cd /opt/fleetos-repos/fleetos-registry && bun install
