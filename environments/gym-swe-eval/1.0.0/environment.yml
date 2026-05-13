@@ -1,3 +1,4 @@
+schema_version: "0.0"  # Backfilled per spec v0.1; bump to "0.1" when migrating to new schema fields
 name: gym-swe-eval
 version: "1.0.0"
 description: "Gym SWE eval — scaffold-Nextjs-and-show task. Extends desktop with tools + scoring hooks"

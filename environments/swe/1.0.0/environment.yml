@@ -1,3 +1,4 @@
+schema_version: "0.0"  # Backfilled per spec v0.1; bump to "0.1" when migrating to new schema fields
 name: swe
 version: "1.0.0"
 description: "SWE production — full computer + bun, pnpm, build-essential, docker CLI, display tools"
